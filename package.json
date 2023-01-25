@@ -5,6 +5,7 @@
   "description": "TODO",
   "main": "src/index.tsx",
   "types": "src/typings.d.ts",
+  "source": "src/index.tsx",
   "files": [
     "README.md",
     "android",
@@ -36,6 +37,7 @@
   },
   "devDependencies": {
     "react": "^16.9.0",
-    "react-native": "^0.61.5"
+    "react-native": "^0.61.5",
+    "typescript": "4.3.5"
   }
 }
