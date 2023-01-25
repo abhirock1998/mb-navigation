@@ -5,7 +5,7 @@
   "description": "TODO",
   "main": "src/index.tsx",
   "types": "src/typings.d.ts",
-  "source": "src/index.tsx",
+  "source": "src/index",
   "files": [
     "README.md",
     "android",
