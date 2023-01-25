@@ -11,14 +11,14 @@ Pod::Spec.new do |s|
   s.description  = <<-DESC
                   react-native-mb-navigation
                    DESC
-  s.homepage     = "https://github.com/abhirock1998/navigator"
+  s.homepage     = "https://github.com/abhirock1998/mb-navigation"
   # brief license entry:
   s.license      = "MIT"
   # optional - use expanded license entry instead:
   # s.license    = { :type => "MIT", :file => "LICENSE" }
   s.authors      = { "Your Name" => "yourname@email.com" }
   s.platforms    = { :ios => "13.0" }
-  s.source       = { :git => "https://github.com/abhirock1998/navigator.git", :tag => "#{s.version}" }
+  s.source       = { :git => "https://github.com/abhirock1998/mb-navigation.git", :tag => "#{s.version}" }
 
   s.source_files = "ios/**/*.{h,c,cc,cpp,m,mm,swift}"
   s.requires_arc = true
