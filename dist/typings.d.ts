@@ -38,8 +38,6 @@ export interface IMapboxNavigationProps {
   onNavigationCancel?: (event: onNavigationCancelled) => void;
   onArrive?: (event: onDestinationArrival) => void;
   onDestinationArrival: (event: onDestinationArrival) => void;
-  showsEndOfRouteFeedback?: boolean;
-  hideStatusView?: boolean;
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en";
