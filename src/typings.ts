@@ -32,7 +32,7 @@ type onError = {
 export interface IMapboxNavigationProps {
   origin?: Coordinate;
   destination?: Coordinate;
-  shouldSimulateRoute?: boolean;
+  isSimulationEnable?: boolean;
   onError?: (event: onError) => void;
   onEvent?: (event: onEvent) => void;
   onNavigationCancel?: (event: onNavigationCancelled) => void;
@@ -41,4 +41,6 @@ export interface IMapboxNavigationProps {
   showsEndOfRouteFeedback?: boolean;
   hideStatusView?: boolean;
   mute?: boolean;
+  navigationMode?: "cycling" | "driving" | "walking";
+  language?: "en";
 }
