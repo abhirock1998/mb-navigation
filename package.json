@@ -4,17 +4,11 @@
   "version": "1.0.0",
   "description": "TODO",
   "main": "dist/index.js",
-  "types": "dist/typings.d.ts",
+  "types": "dist/index.d.ts",
   "source": "src/index",
-  "files": [
-    "README.md",
-    "android",
-    "index.js",
-    "ios",
-    "react-native-mb-navigation.podspec"
-  ],
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepublishOnly": "tsc"
   },
   "repository": {
     "type": "git",
@@ -31,6 +25,10 @@
   "license": "MIT",
   "licenseFilename": "LICENSE",
   "readmeFilename": "README.md",
+  "bugs": {
+    "url": "https://github.com/abhirock1998/mb-navigation/issues"
+  },
+  "homepage": "https://github.com/abhirock1998/mb-navigation#readme",
   "peerDependencies": {
     "react": "*",
     "react-native": "*"

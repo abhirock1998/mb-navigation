@@ -42,5 +42,3 @@ export interface IMapboxNavigationProps {
   hideStatusView?: boolean;
   mute?: boolean;
 }
-
-export {};
