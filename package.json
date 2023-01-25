@@ -3,8 +3,8 @@
   "title": "React Native Mb Navigation",
   "version": "1.0.0",
   "description": "TODO",
-  "main": "src/index.js",
-  "types": "src/index.d.ts",
+  "main": "src/index.tsx",
+  "types": "src/typings.d.ts",
   "files": [
     "README.md",
     "android",
