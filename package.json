@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "description": "TODO",
   "main": "dist/index.js",
-  "types": "dist/index.d.ts",
+  "types": "dist/typings.d.ts",
   "source": "src/index",
   "files": [
     "README.md",
