@@ -12,9 +12,7 @@ declare type WayPoint = {
   Longitude: number;
 };
 
-declare type WayPointMap = {
-  number: WayPoint;
-};
+declare type WayPointMap = Record<number, WayPoint>;
 
 declare type onDestinationArrival = {
   nativeEvent?: {
