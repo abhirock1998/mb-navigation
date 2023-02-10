@@ -61,6 +61,7 @@ export interface IMapboxNavigationProps {
   language?: "en" | "de";
   waypoints?: WayPointMap;
   whiteList: string[];
+  updateLocationDelay?: number;
 }
 // TODO:-> need to think about how this property  exposed to RN app
 // RCT_EXPORT_VIEW_PROPERTY(onWaypointArrival, RCTDirectEventBlock);

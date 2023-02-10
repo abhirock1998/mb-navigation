@@ -61,4 +61,5 @@ export interface IMapboxNavigationProps {
   language?: "en" | "de";
   waypoints?: WayPointMap;
   whiteList: string[];
+  updateLocationDelay?: number;
 }

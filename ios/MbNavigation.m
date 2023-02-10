@@ -16,6 +16,7 @@ RCT_EXPORT_VIEW_PROPERTY(mute, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(isListenerEnableOnEachWaypointArrival, BOOL)
 RCT_EXPORT_VIEW_PROPERTY(navigationMode, NSString)
 RCT_EXPORT_VIEW_PROPERTY(language, NSString)
+RCT_EXPORT_VIEW_PROPERTY(updateLocationDelay, int)
 @end
 
 

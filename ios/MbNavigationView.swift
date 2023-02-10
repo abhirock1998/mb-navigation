@@ -21,6 +21,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   var _embedding: Bool
   var _options: NavigationRouteOptions?
   var _wayPoints = [Waypoint]()
+  var _locationUpdationDelay = 0
   
   //  property that we need to expose to JS
   @objc var onEvent: RCTDirectEventBlock?
@@ -32,6 +33,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
+  @objc var updateLocationDelay: Int = 0;
   @objc var language = "en"
   @objc var mute: Bool = false
   @objc var isListenerEnableOnEachWaypointArrival: Bool = false
@@ -264,13 +266,28 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function fire every second
   func navigationViewController(_ navigationViewController: NavigationViewController, didUpdate progress: RouteProgress, with location: CLLocation, rawLocation: CLLocation) {
-    onLocationChange?(["longitude": location.coordinate.longitude,
+    if updateLocationDelay > 0 {
+        _locationUpdationDelay += 1
+        if _locationUpdationDelay % updateLocationDelay == 0 {
+           onLocationChange?(["longitude": location.coordinate.longitude,
                        "latitude": location.coordinate.latitude,
                        "distanceTraveled": progress.distanceTraveled,
                        "durationRemaining": progress.durationRemaining,
                        "fractionTraveled": progress.fractionTraveled,
                        "distanceRemaining": progress.distanceRemaining,
                       ])
+        }
+        
+    }else {
+      onLocationChange?(["longitude": location.coordinate.longitude,
+                       "latitude": location.coordinate.latitude,
+                       "distanceTraveled": progress.distanceTraveled,
+                       "durationRemaining": progress.durationRemaining,
+                       "fractionTraveled": progress.fractionTraveled,
+                       "distanceRemaining": progress.distanceRemaining,
+                      ])
+    }
+    
     
   }
   
