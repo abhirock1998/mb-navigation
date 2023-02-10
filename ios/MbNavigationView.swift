@@ -87,8 +87,8 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     options.locale = Locale(identifier: self.language)
     self._options = options
     let credentials = NavigationSettings.shared.directions.credentials
-    guard credentials.accessToken  != nil else {
-      self.onError?(["message":"Configure mapbox MBXAccessToken or MGLMapboxAccessToken in your Info.plist file"])
+     guard credentials.accessToken  != nil  else {
+      onError?(["message":"Configure mapbox MBXAccessToken or MGLMapboxAccessToken in your Info.plist file"])
       return;
     }
     
@@ -104,7 +104,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         NavigationSettings.shared.distanceUnit = .mile
         strongSelf.onEvent?(["message":"Creating navigation with response"])
         let indexedRouteResponse = IndexedRouteResponse(routeResponse: response, routeIndex: 0)
-        let navigationService = MapboxNavigationService(indexedRouteResponse: indexedRouteResponse, credentials: NavigationSettings.shared.directions.credentials,simulating: simulationMode)
+        let navigationService = MapboxNavigationService(indexedRouteResponse: indexedRouteResponse, credentials: credentials,simulating: simulationMode)
         // TODO:-> In future we can expose customStyles URL to JS
         let dayStyle = CustomDayStyle()
         let nightStyle = CustomNightStyle()
