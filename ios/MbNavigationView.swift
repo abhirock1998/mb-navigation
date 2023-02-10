@@ -183,11 +183,11 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     _embedding = true
     onEvent?(["message":"Creating... waypoints for navigation"])
     var locations = [Location]()
-    for item in oWayPoints as NSDictionary
+     for item in oWayPoints as NSDictionary
     {
-      
       let point = item.value as! NSDictionary
       guard let oName = point["Name"] as? String else {return}
+      guard let oType = point["Type"] as? String else {return}
       guard let oLatitude = point["Latitude"] as? Double else {
         onError?(["message":"Latitude should be number"])
         return
@@ -197,7 +197,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         return
       }
       let order = point["Order"] as? Int
-      let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order)
+      let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order,type: oType)
       locations.append(location)
     }
     onEvent?(["message":"Location based on Order key is started"])
