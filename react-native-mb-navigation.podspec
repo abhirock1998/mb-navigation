@@ -25,6 +25,8 @@ Pod::Spec.new do |s|
 
   s.dependency "React-Core"
   s.dependency "MapboxNavigation", "~> 2.9.0"
+  # s.dependency "MapboxCoreNavigation", '~> 2.9.0'
+  s.dependency "MapboxMobileEvents", "~> 0.10.2"
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES', 'VALID_ARCHS[sdk=iphonesimulator*]' => 'x86_64' }
 end
 
