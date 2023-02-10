@@ -86,6 +86,11 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     let options = NavigationRouteOptions(waypoints: wayPoints, profileIdentifier: mode)
     options.locale = Locale(identifier: self.language)
     self._options = options
+    let credentials = NavigationSettings.shared.directions.credentials
+    guard credentials.accessToken  != nil else {
+      self.onError?(["message":"Configure mapbox MBXAccessToken or MGLMapboxAccessToken in your Info.plist file"])
+      return;
+    }
     
     _ = Directions.shared.calculate(options) {[weak self] (_, result) in
       guard let strongSelf = self else { return }

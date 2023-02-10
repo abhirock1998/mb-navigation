@@ -2,13 +2,13 @@
  * Provide an array with longitude and latitude [$longitude, $latitude]
  */
 
-export type WayPoint = {
-  Type: "pickup" | "dropoff" | "none";
+export interface WayPoint {
+  type: "pickup" | "dropoff" | "start" | "end" | "none";
   Order?: number;
   Name?: string;
   Latitude: number;
   Longitude: number;
-};
+}
 
 type WayPointMap = Record<number, WayPoint>;
 
