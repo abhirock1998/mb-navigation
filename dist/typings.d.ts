@@ -2,9 +2,7 @@
  * Provide an array with longitude and latitude [$longitude, $latitude]
  */
 
-declare type Coordinate = [number, number];
-
-declare type WayPoint = {
+export declare type WayPoint = {
   type: "pickup" | "dropoff" | "start" | "end" | "none";
   Order?: number;
   Name?: string;
@@ -51,8 +49,6 @@ declare type onError = {
 };
 
 export interface IMapboxNavigationProps {
-  origin: Coordinate;
-  destination: Coordinate;
   isSimulationEnable?: boolean;
   onError: (event: onError) => void;
   onEvent?: (event: onEvent) => void;
