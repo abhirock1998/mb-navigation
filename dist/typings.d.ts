@@ -5,7 +5,7 @@
 declare type Coordinate = [number, number];
 
 declare type WayPoint = {
-  type: "pickup" | "dropoff" | "start" | "end" | "mid";
+  type: "pickup" | "dropoff" | "start" | "end" | "none";
   Order?: number;
   Name?: string;
   Latitude: number;
@@ -64,6 +64,5 @@ export interface IMapboxNavigationProps {
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
   waypoints?: WayPointMap;
+  whiteList: string[];
 }
-
-export {};

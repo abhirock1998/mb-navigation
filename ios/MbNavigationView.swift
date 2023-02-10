@@ -30,22 +30,20 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   @objc var onNavigationCancelled: RCTDirectEventBlock?
   @objc var onDestinationArrival: RCTDirectEventBlock?
   @objc var onLocationChange: RCTDirectEventBlock?
+  @objc var onWaypointArrival: RCTDirectEventBlock?
   
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
   @objc var language = "en"
   @objc var mute: Bool = false
+  @objc var isListenerEnableOnEachWaypointArrival: Bool = false
   
+  
+  @objc var whiteList: NSArray = [] {
+    didSet { setNeedsLayout() }
+  }
   
   @objc var wayPoints: NSDictionary = [:] {
-    didSet { setNeedsLayout() }
-  }
-  
-  @objc var origin: NSArray = [] {
-    didSet { setNeedsLayout() }
-  }
-  
-  @objc var destination: NSArray = [] {
     didSet { setNeedsLayout() }
   }
   
@@ -83,14 +81,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     {
       mode = .walking
     }
-    //    guard origin.count == 2 && destination.count == 2 else { return }
-    
-    //    let originCoord = CLLocationCoordinate2D(latitude: origin[1] as! CLLocationDegrees, longitude: origin[0] as! CLLocationDegrees)
-    //    let destinationCoord =  CLLocationCoordinate2D(latitude: destination[1] as! CLLocationDegrees, longitude: destination[0] as! CLLocationDegrees)
-    let originCoord = CLLocationCoordinate2D(latitude:    53.134608, longitude: 8.182679)
-    let destinationCoord =  CLLocationCoordinate2D(latitude:    53.134898, longitude:  8.179775)
-    let originWaypoint = Waypoint(coordinate:originCoord, coordinateAccuracy: -1)
-    let destinationWaypoint = Waypoint(coordinate:destinationCoord, coordinateAccuracy: -1)
     
     // for more route options setting we can configure here
     let options = NavigationRouteOptions(waypoints: wayPoints, profileIdentifier: mode)
@@ -110,7 +100,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         strongSelf.onEvent?(["message":"Creating navigation with response"])
         let indexedRouteResponse = IndexedRouteResponse(routeResponse: response, routeIndex: 0)
         let navigationService = MapboxNavigationService(indexedRouteResponse: indexedRouteResponse, credentials: NavigationSettings.shared.directions.credentials,simulating: simulationMode)
-        navigationService.router.reroutesProactively = false
         // TODO:-> In future we can expose customStyles URL to JS
         let dayStyle = CustomDayStyle()
         let nightStyle = CustomNightStyle()
@@ -143,17 +132,48 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     vc.voiceController.speechSynthesizer.locale = Locale(identifier: self.language)
     // hide bottom status view it does not remove height of default bottom banner
     vc.showsEndOfRouteFeedback = false
+    vc.showsReportFeedback = false
     vc.navigationView.bottomBannerContainerView.hide()
     self._navViewController = vc
     let currentController = getViewController()
-    guard let parentVc = currentController else {
-      return
-    }
+    guard let parentVc = currentController else {return}
     onEvent?(["message":"Parent VC already loaded"])
     parentVc.present(vc, animated: true,completion: nil)
   }
   
+   /**
+   * Constrain degrees to range -180..+180 (for longitude); e.g. -181 => 179, 181 => -179.
+   * @private
+   * @param {number} degrees
+   * @returns degrees within range -180..+180.
+   */
+  func wrapLongitude(degree: Double) -> Double {
+    if (-180 <= degree && degree <= 180) {return wrapDouble(degree: degree)}
+    let x = degree, a = 180, p = 360;
+    let y = (2 * a * Int(x)/p - p/2)
+    let z = (y % p) + p
+    return wrapDouble(degree: Double(z % p - a));
+  }
   
+  
+  /**
+   * Constrain degrees to range -90..+90 (for latitude); e.g. -91 => -89, 91 => 89.
+   * @private
+   * @param {number} degrees
+   * @returns degrees within range -90..+90.
+   */
+  func wrapLatitude(degree: Double) -> Double {
+    if(-90 <= degree && degree <= 90) {return wrapDouble(degree: degree)}
+    let x = degree, a = 90, p = 360;
+    let y = (( Int(x) - p/4) % p + p)
+    return wrapDouble(degree: Double(4 * a/p * abs(y % p - p/2) - a))
+  }
+
+  func wrapDouble(degree: Double) -> Double {
+    let formattedNumber = String(format: "%.6f", degree)
+    guard let value = Double(formattedNumber) else { return 0 }
+    return value
+  }
   
   
   
@@ -180,9 +200,15 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
       let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order)
       locations.append(location)
     }
+    onEvent?(["message":"Location based on Order key is started"])
+    locations.sort(by: {$0.order ?? 0 < $1.order ?? 0})
+    onEvent?(["message":"Location based on Order key is Done"])
     
     for loc in locations {
-      let point = Waypoint(coordinate: CLLocationCoordinate2D(latitude: loc.latitude!, longitude: loc.longitude!),name:loc.name)
+      let latitude = loc.latitude!
+      let longitude = loc.longitude!
+      let point = createWaypoint(lat: latitude, lng:longitude)
+      point.name = loc.name
       _wayPoints.append(point)
     }
     onEvent?(["message":"Waypoint creation Done with \(_wayPoints.count) points"])
@@ -199,15 +225,29 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     }
     
   }
+
+
+   func endNavigation()  {
+    if(self._navViewController != nil)
+    {
+      self._navViewController?.navigationService.endNavigation(feedback: nil)
+      self._navViewController?.dismiss(animated: true, completion: {
+        self.onNavigationCancelled?(["message":""])
+        self.onEvent?(["message":"Destroying Parent VC"])
+        self._navViewController = nil
+      })
+      
+    }
+    
+  }
+
+  func createWaypoint(lat:Double, lng:Double) -> Waypoint{
+    return Waypoint(coordinate: CLLocationCoordinate2D(latitude:wrapLatitude(degree: lat), longitude: wrapLongitude(degree: lng)))
+  }
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
-    if (!canceled) {
-      return;
-    }
-    _navViewController!.delegate = nil
-    onNavigationCancelled?(["message": "Driver cancelled the navigation"]);
-    navigationViewController.dismiss(animated: true,completion: nil)
+    endNavigation()
   }
   
   // function fire once user reached to its destination
@@ -243,17 +283,26 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
             guard let routeShape = response.routes?.first?.shape else {
               return
             }
-            self?.onEvent?(["message":"Creating.. Match options"])
+            guard let routeShape = response.routes?.first?.shape else {
+              return
+            }
+  
+            //
+            // ❗️IMPORTANT❗️
+            // Use `Directions.calculateRoutes(matching:completionHandler:)` for navigating on a map matching response.
+            //
+  
             let matchOptions = NavigationMatchOptions(coordinates: routeShape.coordinates)
-    
             // By default, each waypoint separates two legs, so the user stops at each waypoint.
             // We want the user to navigate from the first coordinate to the last coordinate without any stops in between.
             // You can specify more intermediate waypoints here if you’d like.
             // TODO:-> here we need to some key on which we can define to stopa ath waypoint or not
             // we can use NSDictionary for checkimg value
-            for waypoint in matchOptions.waypoints.dropFirst().dropLast() {
-              waypoint.separatesLegs = false
-            }
+            // for waypoint in matchOptions.waypoints.dropFirst().dropLast() {
+            //   if !(self!._stoppagePoint.contains(self!.wrapLatitude(degree: waypoint.coordinate.latitude))) {
+            //     waypoint.separatesLegs = false
+            //   }
+            // }
     
     
             Directions.shared.calculateRoutes(matching: matchOptions) { [weak self ] (_, result) in

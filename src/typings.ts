@@ -5,7 +5,7 @@
 type Coordinate = [number, number];
 
 type WayPoint = {
-  Type: "pickup" | "dropoff" | "start" | "end" | "mid";
+  Type: "pickup" | "dropoff" | "none";
   Order?: number;
   Name?: string;
   Latitude: number;
@@ -64,4 +64,8 @@ export interface IMapboxNavigationProps {
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
   waypoints?: WayPointMap;
+  whiteList: string[];
 }
+// TODO:-> need to think about how this property  exposed to RN app
+// RCT_EXPORT_VIEW_PROPERTY(onWaypointArrival, RCTDirectEventBlock);
+// RCT_EXPORT_VIEW_PROPERTY(isListenerEnableOnEachWaypointArrival, BOOL);
