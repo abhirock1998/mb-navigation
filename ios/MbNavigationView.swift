@@ -20,8 +20,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   var _embedded: Bool
   var _embedding: Bool
   var _options: NavigationRouteOptions?
-  var _navigationMapView: NavigationMapView!
-  var _routeResponse: RouteResponse?
   var _wayPoints = [Waypoint]()
   
   //  property that we need to expose to JS
@@ -277,56 +275,56 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   }
   
   //  For more details https://docs.mapbox.com/ios/navigation/api/1.4.2/using-map-matching.html
-  func navigationViewController(_ navigationViewController: NavigationViewController, shouldRerouteFrom location: CLLocation) -> Bool {
+  // func navigationViewController(_ navigationViewController: NavigationViewController, shouldRerouteFrom location: CLLocation) -> Bool {
    
-    let routeOptions = NavigationRouteOptions(waypoints: [Waypoint(coordinate: location.coordinate), self._options!.waypoints.last!])
-        _ = Directions.shared.calculate(routeOptions) { [weak self] (_, result) in
-          switch result {
-          case .failure(let error):
-            self?.onError?(["message":"Error during calculating route again before Re-routing \(error)"])
-          case .success(let response):
-            guard let routeShape = response.routes?.first?.shape else {
-              return
-            }
-            guard let routeShape = response.routes?.first?.shape else {
-              return
-            }
+  //   let routeOptions = NavigationRouteOptions(waypoints: [Waypoint(coordinate: location.coordinate), self._options!.waypoints.last!])
+  //       _ = Directions.shared.calculate(routeOptions) { [weak self] (_, result) in
+  //         switch result {
+  //         case .failure(let error):
+  //           self?.onError?(["message":"Error during calculating route again before Re-routing \(error)"])
+  //         case .success(let response):
+  //           guard let routeShape = response.routes?.first?.shape else {
+  //             return
+  //           }
+  //           guard let routeShape = response.routes?.first?.shape else {
+  //             return
+  //           }
   
-            //
-            // ❗️IMPORTANT❗️
-            // Use `Directions.calculateRoutes(matching:completionHandler:)` for navigating on a map matching response.
-            //
+  //           //
+  //           // ❗️IMPORTANT❗️
+  //           // Use `Directions.calculateRoutes(matching:completionHandler:)` for navigating on a map matching response.
+  //           //
   
-            let matchOptions = NavigationMatchOptions(coordinates: routeShape.coordinates)
-            // By default, each waypoint separates two legs, so the user stops at each waypoint.
-            // We want the user to navigate from the first coordinate to the last coordinate without any stops in between.
-            // You can specify more intermediate waypoints here if you’d like.
-            // TODO:-> here we need to some key on which we can define to stopa ath waypoint or not
-            // we can use NSDictionary for checkimg value
-            // for waypoint in matchOptions.waypoints.dropFirst().dropLast() {
-            //   if !(self!._stoppagePoint.contains(self!.wrapLatitude(degree: waypoint.coordinate.latitude))) {
-            //     waypoint.separatesLegs = false
-            //   }
-            // }
+  //           let matchOptions = NavigationMatchOptions(coordinates: routeShape.coordinates)
+  //           // By default, each waypoint separates two legs, so the user stops at each waypoint.
+  //           // We want the user to navigate from the first coordinate to the last coordinate without any stops in between.
+  //           // You can specify more intermediate waypoints here if you’d like.
+  //           // TODO:-> here we need to some key on which we can define to stopa ath waypoint or not
+  //           // we can use NSDictionary for checkimg value
+  //           // for waypoint in matchOptions.waypoints.dropFirst().dropLast() {
+  //           //   if !(self!._stoppagePoint.contains(self!.wrapLatitude(degree: waypoint.coordinate.latitude))) {
+  //           //     waypoint.separatesLegs = false
+  //           //   }
+  //           // }
     
     
-            Directions.shared.calculateRoutes(matching: matchOptions) { [weak self ] (_, result) in
-              switch result {
-              case .failure(let error):
-                self?.onError?(["message":"Error during calculateRoutes \(error.localizedDescription)"])
-              case .success(let response):
-                guard !(response.routes?.isEmpty ?? true) else {
-                  return
-                }
-                // Convert matchOptions to `RouteOptions`
-                let routeOptions = RouteOptions(matchOptions: matchOptions)
-                self?._navViewController!.navigationService.router.updateRoute(with: .init(routeResponse: response, routeIndex: 0), routeOptions: routeOptions, completion:nil)
-              }
-            }
-          }
-        }
-        return true
-  }
+  //           Directions.shared.calculateRoutes(matching: matchOptions) { [weak self ] (_, result) in
+  //             switch result {
+  //             case .failure(let error):
+  //               self?.onError?(["message":"Error during calculateRoutes \(error.localizedDescription)"])
+  //             case .success(let response):
+  //               guard !(response.routes?.isEmpty ?? true) else {
+  //                 return
+  //               }
+  //               // Convert matchOptions to `RouteOptions`
+  //               let routeOptions = RouteOptions(matchOptions: matchOptions)
+  //               self?._navViewController!.navigationService.router.updateRoute(with: .init(routeResponse: response, routeIndex: 0), routeOptions: routeOptions, completion:nil)
+  //             }
+  //           }
+  //         }
+  //       }
+  //       return true
+  // }
 }
 
 
