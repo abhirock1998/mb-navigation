@@ -6,12 +6,77 @@
 
 ### Mostly automatic installation
 
-`$ react-native link react-native-mb-navigation`
+### For iOS
+
+```javascript
+cd ios
+rpod install
+```
 
 ## Usage
-```javascript
-import MbNavigation from 'react-native-mb-navigation';
 
-// TODO: What to do with the module?
-MbNavigation;
+```javascript
+import MbNavigation from "react-native-mb-navigation";
 ```
+
+> Depend on `MapoboxNavigation 2.9.0`
+
+# Feature
+
+- Include the option to input multiple coordinates up to a maximum of 25, as Mapbox can only handle 25 waypoints at once.
+- To designate certain points as "SilentWaypoints" where the driver does not need to stop, create a "whitelist" property. By default, all points are designated as stoppage points, but this array allows other points to be specified as "SilentWaypoints."
+- Include a "delay" property, which would enable the user to listen at specific time intervals. By default, it listens every second.
+
+## Available property
+
+- **isSimulationEnable** `boolean` We can test the navigation functionality during development by passing certain parameters.
+- **onError** `Function` This function is called when an error occurs.
+- **onEvent** `Function` usable for debugging
+- **onNavigationCancelled** `Function` This function is called when the user cancels navigation by either pressing the close icon on the bottom bar or from the Notification tray.
+- **onDestinationArrival** `Function` called once user arrived at final waypoint
+- **onLocationChange** `Function` This function is called every second and returns the current user location along with additional details.
+- **mute** `boolean` To mute navigation speech, a property can be set to true, with false being the default.
+- **navigationMode** `String` The mode can be used for different types of transportation, such as walking, cycling, or driving. The default mode is driving
+- **language** `String` A property can be used to change the navigation language, with `en` being the default.
+- **waypoints** `Waypoint` Dictionary of coordinate
+
+```javascript
+Waypoint;
+
+{
+  type: "pickup" | "dropoff" | "start" | "end" | "none";
+  Order: number;
+  Name: string;
+  Latitude: number;
+  Longitude: number;
+}
+```
+
+```
+{
+  1 : {
+    type: "start";
+    Order: number;
+    Name: string;
+    Latitude: number;
+    Longitude: number;
+   },
+  2 : {
+   type: "end";
+   Order: number;
+   Name: string;
+   Latitude: number;
+   Longitude: number;
+ }
+ ... more
+}
+
+```
+
+- _required_ `type` A property is used to indicate the type of point. By default, all points are designated as stop points. To specify a specific stop point, a value must be provided to Mapbox.
+- \_required `Order` This number is used to sort the waypoint.
+- \_optional `Name` is name of the waypoint
+- \_required `Latitude` latitude of thwe waypoint
+- \_required `Longitude` longitude of thwe waypoint
+- \_optional `whiteList` To designate a specific point as a stoppage point, all points are set as stoppage points by default.
+- \_optional `updateLocationDelay` This is the number of seconds for which we listen to any location changes. The default value is 0
