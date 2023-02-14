@@ -74,9 +74,9 @@ Waypoint;
 ```
 
 - _required_ `type` A property is used to indicate the type of point. By default, all points are designated as stop points. To specify a specific stop point, a value must be provided to Mapbox.
-- \_required `Order` This number is used to sort the waypoint.
-- \_optional `Name` is name of the waypoint
-- \_required `Latitude` latitude of thwe waypoint
-- \_required `Longitude` longitude of thwe waypoint
-- \_optional `whiteList` To designate a specific point as a stoppage point, all points are set as stoppage points by default.
-- \_optional `updateLocationDelay` This is the number of seconds for which we listen to any location changes. The default value is 0
+- _required_ `Order` This number is used to sort the waypoint.
+- _optional_ `Name` is name of the waypoint
+- _required_ `Latitude` latitude of thwe waypoint
+- _required_ `Longitude` longitude of thwe waypoint
+- _optional_ `whiteList` To designate a specific point as a stoppage point, all points are set as stoppage points by default.
+- _optional_ `updateLocationDelay` This is the number of seconds for which we listen to any location changes. The default value is `0`
