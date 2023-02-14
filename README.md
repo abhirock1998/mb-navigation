@@ -19,7 +19,7 @@ rpod install
 import MbNavigation from "react-native-mb-navigation";
 ```
 
-> Depend on `MapoboxNavigation 2.9.0`
+> Depend on `MapoboxNavigation 1.3.0`
 
 # Feature
 

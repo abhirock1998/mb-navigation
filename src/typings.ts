@@ -4,7 +4,7 @@
 
 export interface WayPoint {
   type: "pickup" | "dropoff" | "start" | "end" | "none";
-  Order?: number;
+  Order: number;
   Name?: string;
   Latitude: number;
   Longitude: number;
@@ -12,26 +12,7 @@ export interface WayPoint {
 
 type WayPointMap = Record<number, WayPoint>;
 
-type onDestinationArrival = {
-  nativeEvent?: {
-    destinationLatitude: number;
-    destinationLongitude: number;
-  };
-};
-
-type onNavigationCancelled = {
-  nativeEvent?: {
-    message?: string;
-  };
-};
-
-type onEvent = {
-  nativeEvent?: {
-    message?: string;
-  };
-};
-
-type onError = {
+type onMapboxEvent = {
   nativeEvent?: {
     message?: string;
   };
@@ -41,21 +22,15 @@ type onLocationChange = {
   nativeEvent?: {
     longitude: number;
     latitude: number;
-    distanceTraveled: number;
-    durationRemaining: number;
-    fractionTraveled: number;
-    distanceRemaining: number;
   };
 };
 
 export interface IMapboxNavigationProps {
   isSimulationEnable?: boolean;
-  onError: (event: onError) => void;
-  onEvent?: (event: onEvent) => void;
-  onNavigationCancelled?: (event: onNavigationCancelled) => void;
-  onArrive?: (event: onDestinationArrival) => void;
-  onDestinationArrival: (event: onDestinationArrival) => void;
-  onLocationChange: (event: onLocationChange) => void;
+  onError: (event: onMapboxEvent) => void;
+  onEvent?: (event: onMapboxEvent) => void;
+  onCancelled?: () => void;
+  onChange: (event: onLocationChange) => void;
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
@@ -63,6 +38,3 @@ export interface IMapboxNavigationProps {
   whiteList: string[];
   updateLocationDelay?: number;
 }
-// TODO:-> need to think about how this property  exposed to RN app
-// RCT_EXPORT_VIEW_PROPERTY(onWaypointArrival, RCTDirectEventBlock);
-// RCT_EXPORT_VIEW_PROPERTY(isListenerEnableOnEachWaypointArrival, BOOL);

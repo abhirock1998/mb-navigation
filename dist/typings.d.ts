@@ -4,7 +4,7 @@
 
 export declare interface WayPoint {
   type: "pickup" | "dropoff" | "start" | "end" | "none";
-  Order?: number;
+  Order: number;
   Name?: string;
   Latitude: number;
   Longitude: number;
@@ -12,37 +12,14 @@ export declare interface WayPoint {
 
 declare type WayPointMap = Record<number, WayPoint>;
 
-declare type onDestinationArrival = {
-  nativeEvent?: {
-    destinationLatitude: number;
-    destinationLongitude: number;
-  };
-};
-
 declare type onLocationChange = {
   nativeEvent?: {
     longitude: number;
     latitude: number;
-    distanceTraveled: number;
-    durationRemaining: number;
-    fractionTraveled: number;
-    distanceRemaining: number;
   };
 };
 
-declare type onNavigationCancelled = {
-  nativeEvent?: {
-    message?: string;
-  };
-};
-
-declare type onEvent = {
-  nativeEvent?: {
-    message?: string;
-  };
-};
-
-declare type onError = {
+type onMapboxEvent = {
   nativeEvent?: {
     message?: string;
   };
@@ -50,12 +27,10 @@ declare type onError = {
 
 export interface IMapboxNavigationProps {
   isSimulationEnable?: boolean;
-  onError: (event: onError) => void;
-  onEvent?: (event: onEvent) => void;
-  onNavigationCancelled?: (event: onNavigationCancelled) => void;
-  onArrive?: (event: onDestinationArrival) => void;
-  onDestinationArrival: (event: onDestinationArrival) => void;
-  onLocationChange: (event: onLocationChange) => void;
+  onError: (event: onMapboxEvent) => void;
+  onEvent?: (event: onMapboxEvent) => void;
+  onCancelled?: () => void;
+  onChange: (event: onLocationChange) => void;
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";

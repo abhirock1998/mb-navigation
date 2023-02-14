@@ -8,14 +8,11 @@
 import Foundation
 import UIKit
 import React
-import MapboxMaps
 import MapboxNavigation
 import MapboxCoreNavigation
 import MapboxDirections
 
 class MapboxNavigation: UIView, NavigationViewControllerDelegate {
-  
-  
   weak var _navViewController: NavigationViewController?
   var _embedded: Bool
   var _embedding: Bool
@@ -29,13 +26,14 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   @objc var onNavigationCancelled: RCTDirectEventBlock?
   @objc var onDestinationArrival: RCTDirectEventBlock?
   @objc var onLocationChange: RCTDirectEventBlock?
+  @objc var onDelayedLocationChange: RCTDirectEventBlock?
   @objc var onWaypointArrival: RCTDirectEventBlock?
   
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
-  @objc var updateLocationDelay: Int = 0;
   @objc var language = "en"
   @objc var mute: Bool = false
+  @objc var updateLocationDelay: Int = 0;
   @objc var isListenerEnableOnEachWaypointArrival: Bool = false
   
   
@@ -66,129 +64,19 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     }
   }
   
-  private func startNavigationWithWayPoints(wayPoints: [Waypoint]) {
-    self.onEvent?(["message":"Configuring.. navigation with waypoints"])
-    var mode: ProfileIdentifier = .automobileAvoidingTraffic
-    if (navigationMode == "cycling")
-    {
-      mode = .cycling
-    }
-    else if(navigationMode == "driving")
-    {
-      mode = .automobile
-    }
-    else if(navigationMode == "walking")
-    {
-      mode = .walking
-    }
-    
-    // for more route options setting we can configure here
-    let options = NavigationRouteOptions(waypoints: wayPoints, profileIdentifier: mode)
-    options.locale = Locale(identifier: self.language)
-    self._options = options
-    let credentials = NavigationSettings.shared.directions.credentials
-     guard credentials.accessToken  != nil  else {
-      onError?(["message":"Configure mapbox MBXAccessToken or MGLMapboxAccessToken in your Info.plist file"])
-      return;
-    }
-    
-    _ = Directions.shared.calculate(options) {[weak self] (_, result) in
-      guard let strongSelf = self else { return }
-      switch result {
-      case .failure(let error):
-        strongSelf.onError?(["message":"Error during getting routes \(error.localizedDescription)"])
-      case .success(let response):
-        strongSelf.onEvent?(["message":"Ready to start navigation"])
-        let simulationMode: SimulationMode = strongSelf.isSimulationEnable ? .always : .never
-        NavigationSettings.shared.voiceMuted = strongSelf.mute;
-        NavigationSettings.shared.distanceUnit = .mile
-        strongSelf.onEvent?(["message":"Creating navigation with response"])
-        let indexedRouteResponse = IndexedRouteResponse(routeResponse: response, routeIndex: 0)
-        let navigationService = MapboxNavigationService(indexedRouteResponse: indexedRouteResponse, credentials: credentials,simulating: simulationMode)
-        // TODO:-> In future we can expose customStyles URL to JS
-        let dayStyle = CustomDayStyle()
-        let nightStyle = CustomNightStyle()
-        let navigationOptions = NavigationOptions(styles: [dayStyle, nightStyle], navigationService: navigationService)
-        strongSelf.configureNavigationViewController(indexRouteResponse: indexedRouteResponse, navigationOptions: navigationOptions)
-        
-        
-      }
-    }
-    
-  }
-  
-  private func getViewController() -> UIViewController? {
-    var parentResponder: UIResponder? = self
-    while parentResponder != nil {
-      parentResponder = parentResponder!.next
-      if let viewController = parentResponder as? UIViewController {
-        return viewController
-      }
-    }
-    return nil
-  }
   
   
-  private func configureNavigationViewController(indexRouteResponse: IndexedRouteResponse,navigationOptions: NavigationOptions ) {
-    let vc = NavigationViewController(for: indexRouteResponse,navigationOptions: navigationOptions)
-    vc.modalPresentationStyle = .fullScreen
-    vc.delegate = self
-    vc.navigationMapView?.localizeLabels()
-    vc.voiceController.speechSynthesizer.locale = Locale(identifier: self.language)
-    // hide bottom status view it does not remove height of default bottom banner
-    vc.showsEndOfRouteFeedback = false
-    vc.showsReportFeedback = false
-    vc.navigationView.bottomBannerContainerView.hide()
-    self._navViewController = vc
-    let currentController = getViewController()
-    guard let parentVc = currentController else {return}
-    onEvent?(["message":"Parent VC already loaded"])
-    parentVc.present(vc, animated: true,completion: nil)
-  }
-  
-   /**
-   * Constrain degrees to range -180..+180 (for longitude); e.g. -181 => 179, 181 => -179.
-   * @private
-   * @param {number} degrees
-   * @returns degrees within range -180..+180.
-   */
-  func wrapLongitude(degree: Double) -> Double {
-    if (-180 <= degree && degree <= 180) {return wrapDouble(degree: degree)}
-    let x = degree, a = 180, p = 360;
-    let y = (2 * a * Int(x)/p - p/2)
-    let z = (y % p) + p
-    return wrapDouble(degree: Double(z % p - a));
-  }
-  
-  
-  /**
-   * Constrain degrees to range -90..+90 (for latitude); e.g. -91 => -89, 91 => 89.
-   * @private
-   * @param {number} degrees
-   * @returns degrees within range -90..+90.
-   */
-  func wrapLatitude(degree: Double) -> Double {
-    if(-90 <= degree && degree <= 90) {return wrapDouble(degree: degree)}
-    let x = degree, a = 90, p = 360;
-    let y = (( Int(x) - p/4) % p + p)
-    return wrapDouble(degree: Double(4 * a/p * abs(y % p - p/2) - a))
-  }
-
-  func wrapDouble(degree: Double) -> Double {
-    let formattedNumber = String(format: "%.6f", degree)
-    guard let value = Double(formattedNumber) else { return 0 }
-    return value
-  }
-  
-  
-  
-  private func initNavigation()  {
+  func initNavigation()  {
     _wayPoints.removeAll()
+    guard whiteList.count > 0 else {
+      onError?(["message":"must set whiteList array but provided with \(whiteList.count)"])
+      return
+    }
     let oWayPoints = wayPoints as NSDictionary
     _embedding = true
     onEvent?(["message":"Creating... waypoints for navigation"])
     var locations = [Location]()
-     for item in oWayPoints as NSDictionary
+    for item in oWayPoints as NSDictionary
     {
       let point = item.value as! NSDictionary
       guard let oName = point["Name"] as? String else {return}
@@ -205,34 +93,139 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
       let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order,type: oType)
       locations.append(location)
     }
+    // sort location
     onEvent?(["message":"Location based on Order key is started"])
     locations.sort(by: {$0.order ?? 0 < $1.order ?? 0})
     onEvent?(["message":"Location based on Order key is Done"])
-    
     for loc in locations {
       let latitude = loc.latitude!
       let longitude = loc.longitude!
       let point = createWaypoint(lat: latitude, lng:longitude)
       point.name = loc.name
-      _wayPoints.append(point)
+      let parsedLat = point.coordinate.latitude
+      if parsedLat != 0 {
+        if !whiteList.contains(loc.type){
+          point.separatesLegs = false;
+        }
+        _wayPoints.append(point)
+      }
+      
     }
     onEvent?(["message":"Waypoint creation Done with \(_wayPoints.count) points"])
-    
-    //  At least tow waypoint should exist for navigation
     if(_wayPoints.count > 2 && _wayPoints.count <= 25)
     {
-      
       _embedding = false
       _embedded = true
       startNavigationWithWayPoints(wayPoints: _wayPoints)
     } else {
-      onError?(["message":"Waypoint should be >= 2 and <= 25 but provided with \(_wayPoints.count) points"])
+      onError?(["message":"Waypoint length should be >= 2 and <= 25 but provided with \(_wayPoints.count) waypoints"])
     }
-    
   }
-
-
-   func endNavigation()  {
+  
+  /**
+   * Constrain degrees to range -180..+180 (for longitude); e.g. -181 => 179, 181 => -179.
+   * @private
+   * @param {number} degrees
+   * @returns degrees within range -180..+180.
+   */
+  func wrapLongitude(degree: Double) -> Double {
+    if (-180 <= degree && degree <= 180) {return wrapDouble(degree: degree)}
+    let x = degree, a = 180, p = 360;
+    let y = (2 * a * Int(x)/p - p/2)
+    let z = (y % p) + p
+    return wrapDouble(degree: Double(z % p - a));
+  }
+  
+  /**
+   * Constrain degrees to range -90..+90 (for latitude); e.g. -91 => -89, 91 => 89.
+   * @private
+   * @param {number} degrees
+   * @returns degrees within range -90..+90.
+   */
+  func wrapLatitude(degree: Double) -> Double {
+    if(-90 <= degree && degree <= 90) {return wrapDouble(degree: degree)}
+    let x = degree, a = 90, p = 360;
+    let y = (( Int(x) - p/4) % p + p)
+    return wrapDouble(degree: Double(4 * a/p * abs(y % p - p/2) - a))
+  }
+  
+  
+  // wrapped long lfoat number to 6digit after decimal to process data easily
+  func wrapDouble(degree: Double) -> Double {
+    let formattedNumber = String(format: "%.6f", degree)
+    guard let value = Double(formattedNumber) else { return 0 }
+    return value
+  }
+  
+  func createWaypoint(lat:Double, lng:Double) -> Waypoint{
+    return Waypoint(coordinate: CLLocationCoordinate2D(latitude:wrapLatitude(degree: lat), longitude: wrapLongitude(degree: lng)))
+  }
+  
+  func startNavigationWithWayPoints(wayPoints: [Waypoint]) {
+    self.onEvent?(["message":"Configuring.. navigation with waypoints"])
+    var mode: DirectionsProfileIdentifier = .automobileAvoidingTraffic
+    if (navigationMode == "cycling"){
+      mode = .cycling
+    }else if(navigationMode == "driving"){
+      mode = .automobile
+    }else if(navigationMode == "walking"){
+      mode = .walking
+    }
+    // for more route options setting we can configure here
+    let  options = NavigationRouteOptions(waypoints: wayPoints, profileIdentifier: mode)
+    options.locale = Locale(identifier: self.language)
+    self._options = options
+    
+    _ = Directions.shared.calculate(options) {[weak self] (_, result) in
+      guard let strongSelf = self else { return }
+      switch result {
+      case .failure(let error):
+        strongSelf.onError?(["message":"Error during getting routes \(error.localizedDescription)"])
+      case .success(let response):
+        strongSelf.onEvent?(["message":"Ready to start navigation"])
+        let simulationMode: SimulationMode = strongSelf.isSimulationEnable ? .always : .never
+        let simulationStatus = strongSelf.isSimulationEnable ? "Enable" : "Disable"
+        strongSelf.onEvent?(["message":"Simulation is \(simulationStatus)"])
+        NavigationSettings.shared.voiceMuted = strongSelf.mute;
+        NavigationSettings.shared.distanceUnit = .mile
+        strongSelf.onEvent?(["message":"Creating navigation with RouteResponse"])
+        guard let route = response.routes?.first else {return}
+        let navigationService = MapboxNavigationService(route: route, routeIndex: 0, routeOptions: options,simulating: simulationMode)
+        let navigationOptions = NavigationOptions(navigationService: navigationService);
+        strongSelf.configureNavigationViewController(route: route ,routeOptions: options)
+      }
+      
+    }
+  }
+  
+  func configureNavigationViewController(route: Route,routeOptions:NavigationRouteOptions ){
+    let vc = NavigationViewController(for: route, routeIndex: 0, routeOptions: routeOptions)
+    vc.modalPresentationStyle = .fullScreen
+    vc.voiceController.speechSynthesizer.locale = Locale(identifier: self.language)
+    vc.showsEndOfRouteFeedback = false
+    vc.showsReportFeedback = false
+    vc.hidesBottomBarWhenPushed = true
+    vc.delegate = self
+    self._navViewController = vc
+    let currentController = getViewController()
+    guard let parentVc = currentController else {return}
+    onEvent?(["message":"Parent VC already loaded"])
+    parentVc.present(vc, animated: true,completion: nil)
+  }
+  
+  func getViewController() -> UIViewController? {
+    var parentResponder: UIResponder? = self
+    while parentResponder != nil {
+      parentResponder = parentResponder!.next
+      if let viewController = parentResponder as? UIViewController {
+        return viewController
+      }
+    }
+    return nil
+  }
+  
+  
+  func endNavigation()  {
     if(self._navViewController != nil)
     {
       self._navViewController?.navigationService.endNavigation(feedback: nil)
@@ -240,15 +233,11 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         self.onNavigationCancelled?(["message":""])
         self.onEvent?(["message":"Destroying Parent VC"])
         self._navViewController = nil
+        self.updateLocationDelay = 0
       })
-      
     }
-    
   }
-
-  func createWaypoint(lat:Double, lng:Double) -> Waypoint{
-    return Waypoint(coordinate: CLLocationCoordinate2D(latitude:wrapLatitude(degree: lat), longitude: wrapLongitude(degree: lng)))
-  }
+  
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
@@ -257,92 +246,55 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function fire once user reached to its destination
   func navigationViewController(_ navigationViewController: NavigationViewController, didArriveAt waypoint: Waypoint) -> Bool {
-    onDestinationArrival?([
-      "destinationLatitude": waypoint.coordinate.latitude,
-      "destinationLongitude": waypoint.coordinate.longitude,
-    ]);
-    return true;
+    let isFinalLeg = navigationViewController.navigationService.routeProgress.isFinalLeg
+    if isFinalLeg {
+      return true
+    }
+    let alert = UIAlertController(title: "Arrived at \(waypoint.name ?? "Unknown").", message: "Would you like to continue?", preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { _ in
+      // Begin the next leg once the driver confirms
+      if !isFinalLeg {
+        navigationViewController.navigationService.router.advanceLegIndex()
+        navigationViewController.navigationService.start()
+      }
+    }))
+    navigationViewController.present(alert, animated: true, completion: nil)
+    return false
   }
   
   // function fire every second
   func navigationViewController(_ navigationViewController: NavigationViewController, didUpdate progress: RouteProgress, with location: CLLocation, rawLocation: CLLocation) {
     if updateLocationDelay > 0 {
-        _locationUpdationDelay += 1
-        if _locationUpdationDelay % updateLocationDelay == 0 {
-           onLocationChange?(["longitude": location.coordinate.longitude,
-                       "latitude": location.coordinate.latitude,
-                       "distanceTraveled": progress.distanceTraveled,
-                       "durationRemaining": progress.durationRemaining,
-                       "fractionTraveled": progress.fractionTraveled,
-                       "distanceRemaining": progress.distanceRemaining,
-                      ])
-        }
-        
-    }else {
-      onLocationChange?(["longitude": location.coordinate.longitude,
-                       "latitude": location.coordinate.latitude,
-                       "distanceTraveled": progress.distanceTraveled,
-                       "durationRemaining": progress.durationRemaining,
-                       "fractionTraveled": progress.fractionTraveled,
-                       "distanceRemaining": progress.distanceRemaining,
-                      ])
+      _locationUpdationDelay += 1
+      if _locationUpdationDelay % updateLocationDelay == 0 {
+        onDelayedLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
+      }
+    } else {
+      onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
     }
-    
-    
   }
   
-  //  For more details https://docs.mapbox.com/ios/navigation/api/1.4.2/using-map-matching.html
-  // func navigationViewController(_ navigationViewController: NavigationViewController, shouldRerouteFrom location: CLLocation) -> Bool {
-   
-  //   let routeOptions = NavigationRouteOptions(waypoints: [Waypoint(coordinate: location.coordinate), self._options!.waypoints.last!])
-  //       _ = Directions.shared.calculate(routeOptions) { [weak self] (_, result) in
-  //         switch result {
-  //         case .failure(let error):
-  //           self?.onError?(["message":"Error during calculating route again before Re-routing \(error)"])
-  //         case .success(let response):
-  //           guard let routeShape = response.routes?.first?.shape else {
-  //             return
-  //           }
-  //           guard let routeShape = response.routes?.first?.shape else {
-  //             return
-  //           }
-  
-  //           //
-  //           // ❗️IMPORTANT❗️
-  //           // Use `Directions.calculateRoutes(matching:completionHandler:)` for navigating on a map matching response.
-  //           //
-  
-  //           let matchOptions = NavigationMatchOptions(coordinates: routeShape.coordinates)
-  //           // By default, each waypoint separates two legs, so the user stops at each waypoint.
-  //           // We want the user to navigate from the first coordinate to the last coordinate without any stops in between.
-  //           // You can specify more intermediate waypoints here if you’d like.
-  //           // TODO:-> here we need to some key on which we can define to stopa ath waypoint or not
-  //           // we can use NSDictionary for checkimg value
-  //           // for waypoint in matchOptions.waypoints.dropFirst().dropLast() {
-  //           //   if !(self!._stoppagePoint.contains(self!.wrapLatitude(degree: waypoint.coordinate.latitude))) {
-  //           //     waypoint.separatesLegs = false
-  //           //   }
-  //           // }
-    
-    
-  //           Directions.shared.calculateRoutes(matching: matchOptions) { [weak self ] (_, result) in
-  //             switch result {
-  //             case .failure(let error):
-  //               self?.onError?(["message":"Error during calculateRoutes \(error.localizedDescription)"])
-  //             case .success(let response):
-  //               guard !(response.routes?.isEmpty ?? true) else {
-  //                 return
-  //               }
-  //               // Convert matchOptions to `RouteOptions`
-  //               let routeOptions = RouteOptions(matchOptions: matchOptions)
-  //               self?._navViewController!.navigationService.router.updateRoute(with: .init(routeResponse: response, routeIndex: 0), routeOptions: routeOptions, completion:nil)
-  //             }
-  //           }
-  //         }
-  //       }
-  //       return true
-  // }
 }
+
+
+// -----------------------------  UTILS CLASS MODEL -------------------------------------
+
+class Location : Codable{
+  let name: String
+  let latitude: Double?
+  let longitude: Double?
+  let order: Int?
+  let type: String
+  
+  init(name: String, latitude: Double?, longitude: Double?, order: Int? = nil,type: String) {
+    self.name = name
+    self.latitude = latitude
+    self.longitude = longitude
+    self.order = order
+    self.type = type
+  }
+}
+
 
 
 
