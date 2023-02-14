@@ -8,7 +8,8 @@
   "source": "src/index",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "prepublishOnly": "tsc"
+    "prepublishOnly": "tsc",
+    "publish": "git push https://github.com/abhirock1998/mb-navigation.git master"
   },
   "repository": {
     "type": "git",
