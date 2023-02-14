@@ -4,8 +4,8 @@ require "json"
 
 package = JSON.parse(File.read(File.join(__dir__, "package.json")))
 
-TargetsToChangeToDynamic = ['MapboxMobileEvents']
-# TargetsToChangeToDynamic = []
+# TargetsToChangeToDynamic = ['MapboxMobileEvents']
+TargetsToChangeToDynamic = []
 
 $RNMBNAV = Object.new
 
