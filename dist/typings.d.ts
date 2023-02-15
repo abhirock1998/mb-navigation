@@ -1,7 +1,7 @@
 declare type AllowedWaypointType = "pickup" | "dropoff" | "end" | "none";
 
 export declare interface WayPoint {
-  type: AllowedWaypointType;
+  Type: AllowedWaypointType;
   Order: number;
   Name?: string;
   Latitude: number;

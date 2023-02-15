@@ -1,7 +1,7 @@
 type AllowedWaypointType = "pickup" | "dropoff" | "end" | "none";
 
 export interface WayPoint {
-  type: AllowedWaypointType;
+  Type: AllowedWaypointType;
   Order: number;
   Name?: string;
   Latitude: number;
