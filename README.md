@@ -25,7 +25,7 @@ pod install
 import MapboxNavigation from "react-native-mb-navigation";
 ```
 
-> Depend on `MapoboxNavigation 1.3.0`
+> **Dependency** `MapoboxNavigation 1.3.0`
 
 # Feature
 
@@ -44,11 +44,11 @@ import MapboxNavigation from "react-native-mb-navigation";
 - **mute** `boolean` To mute navigation speech, a property can be set to true, with false being the default.
 - **navigationMode** `String` The mode can be used for different types of transportation, such as walking, cycling, or driving. The default mode is driving
 - **language** `String` A property can be used to change the navigation language, with `en` being the default.
-- **waypoints** `Waypoint` Dictionary of coordinate
-- **whiteList** use for making specific point as sopppage point and other waypoint type that not include in this arry will make as non stoppage point by default `[]`
-- **updateLocationDelay** `number` for add delay in location change update function
+- **whiteList** To designate a specific point as a stoppage point, all points are set as stoppage points by default.`
+- **updateLocationDelay** `number` Number of seconds for which we listen to any location changes. The default value is `0`
 - **onWaypointArrival** `Function` this function fire whenever user arrive at waypoint except `Destination` waypoint
 - **onDestinationArrival** `Function` this function fire only once when user arrived at ts `Destination` waypoint
+- **waypoints** `Waypoint` Dictionary of coordinate
 
 ```javascript
 Waypoint;
@@ -68,15 +68,15 @@ Waypoint;
     type: "start";
     Order: number;
     Name: string;
-    Latitude: number;
-    Longitude: number;
+    Latitude: 37.3435;
+    Longitude: 122.2343;
    },
   2 : {
    type: "end";
    Order: number;
    Name: string;
-   Latitude: number;
-   Longitude: number;
+   Latitude: 38.342335;
+   Longitude: 120.232343;
  }
  ... more
 }
@@ -88,5 +88,3 @@ Waypoint;
 - _optional_ `Name` is name of the waypoint
 - _required_ `Latitude` latitude of thwe waypoint
 - _required_ `Longitude` longitude of thwe waypoint
-- _optional_ `whiteList` To designate a specific point as a stoppage point, all points are set as stoppage points by default.
-- _optional_ `updateLocationDelay` This is the number of seconds for which we listen to any location changes. The default value is `0`
