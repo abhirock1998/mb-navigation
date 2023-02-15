@@ -1,11 +1,4 @@
-declare type AllowedWaypointType =
-  | "pickup"
-  | "dropoff"
-  | "start"
-  | "end"
-  | "none";
-
-declare type AllowedWhitelistKey = "pickup" | "dropoff" | "end" | "none";
+declare type AllowedWaypointType = "pickup" | "dropoff" | "end" | "none";
 
 export declare interface WayPoint {
   type: AllowedWaypointType;
@@ -43,7 +36,7 @@ export interface IMapboxNavigationProps {
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
   waypoints?: WayPointMap;
-  whiteList: AllowedWhitelistKey[];
+  whiteList: AllowedWaypointType[];
   updateLocationDelay?: number;
   onWaypointArrival?: (event: onArrivalEvent) => void;
   onDestinationArrival?: (event: onArrivalEvent) => void;
