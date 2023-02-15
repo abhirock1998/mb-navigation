@@ -1,9 +1,11 @@
 /** @type {[number, number]}
  * Provide an array with longitude and latitude [$longitude, $latitude]
  */
+type AllowedWaypointType = "pickup" | "dropoff" | "start" | "end" | "none";
+type AllowedWhitelistKey = "pickup" | "dropoff" | "end" | "none";
 
 export interface WayPoint {
-  type: "pickup" | "dropoff" | "start" | "end" | "none";
+  type: AllowedWaypointType;
   Order: number;
   Name?: string;
   Latitude: number;
@@ -35,6 +37,6 @@ export interface IMapboxNavigationProps {
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
   waypoints?: WayPointMap;
-  whiteList: string[];
+  whiteList: AllowedWhitelistKey[];
   updateLocationDelay?: number;
 }
