@@ -35,7 +35,7 @@ export interface IMapboxNavigationProps {
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
-  waypoints?: WayPointMap;
+  waypoints: WayPointMap;
   whiteList: AllowedWaypointType[];
   updateLocationDelay?: number;
   onWaypointArrival?: (event: onArrivalEvent) => void;
