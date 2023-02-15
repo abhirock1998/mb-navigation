@@ -23,18 +23,14 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   //  property that we need to expose to JS
   @objc var onEvent: RCTDirectEventBlock?
   @objc var onError: RCTDirectEventBlock?
-  @objc var onNavigationCancelled: RCTDirectEventBlock?
-  @objc var onDestinationArrival: RCTDirectEventBlock?
-  @objc var onLocationChange: RCTDirectEventBlock?
-  @objc var onDelayedLocationChange: RCTDirectEventBlock?
-  @objc var onWaypointArrival: RCTDirectEventBlock?
+  @objc var onChange: RCTDirectEventBlock?
+  @objc var onCancelled: RCTDirectEventBlock
   
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
   @objc var language = "en"
   @objc var mute: Bool = false
   @objc var updateLocationDelay: Int = 0;
-  @objc var isListenerEnableOnEachWaypointArrival: Bool = false
   
   
   @objc var whiteList: NSArray = [] {
@@ -230,7 +226,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     {
       self._navViewController?.navigationService.endNavigation(feedback: nil)
       self._navViewController?.dismiss(animated: true, completion: {
-        self.onNavigationCancelled?(["message":""])
+        // self.onNavigationCancelled?(["message":""])
         self.onEvent?(["message":"Destroying Parent VC"])
         self._navViewController = nil
         self.updateLocationDelay = 0
@@ -267,7 +263,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     if updateLocationDelay > 0 {
       _locationUpdationDelay += 1
       if _locationUpdationDelay % updateLocationDelay == 0 {
-        onDelayedLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
+        onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
       }
     } else {
       onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
