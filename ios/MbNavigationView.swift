@@ -241,6 +241,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
+    onEvent?(["message":"Trying to cancel the navigation"])
     let alert = UIAlertController(title: "Cancel", message: "Are you sure want to cancel the navigation?", preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "No", style: .cancel))
     alert.addAction(UIAlertAction(title: "Yes", style: .destructive,handler: {_ in
@@ -255,6 +256,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     let title = "Arrived at \(waypoint.name ?? "Unknown")."
     let isFinalLeg = navigationViewController.navigationService.routeProgress.isFinalLeg
     if isFinalLeg {
+      // final destination alert
       let alert = UIAlertController(title: "You arrived at your destination",message: nil, preferredStyle: .alert)
       alert.addAction(UIAlertAction(title: "Ok", style: .default,handler: {_ in
         self.onDestinationArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
@@ -264,8 +266,9 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
       return true
     }
     let alert = UIAlertController(title:title, message: "Would you like to continue?", preferredStyle: .alert)
-    alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { _ in
+    alert.addAction(UIAlertAction(title: "Yes", style: .default, handler: { _ in
       // Begin the next leg once the driver confirms
+      // waypoint arrival alert
       if !isFinalLeg {
         self.onWaypointArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
         navigationViewController.navigationService.router.advanceLegIndex()
