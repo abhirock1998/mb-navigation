@@ -263,10 +263,10 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     if updateLocationDelay > 0 {
       _locationUpdationDelay += 1
       if _locationUpdationDelay % updateLocationDelay == 0 {
-        onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
+        onChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
       }
     } else {
-      onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
+      onChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
     }
   }
   
