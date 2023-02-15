@@ -21,9 +21,9 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   var _locationUpdationDelay = 0
   
   //  property that we need to expose to JS
-  @objc var onEvent: RCTDirectEventBlock?
-  @objc var onError: RCTDirectEventBlock?
-  @objc var onChange: RCTDirectEventBlock?
+  @objc var onEvent: RCTDirectEventBlock
+  @objc var onError: RCTDirectEventBlock
+  @objc var onChange: RCTDirectEventBlock
   @objc var onCancelled: RCTDirectEventBlock
   
   @objc var isSimulationEnable: Bool = false;
