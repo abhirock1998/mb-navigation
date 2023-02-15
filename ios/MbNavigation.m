@@ -6,7 +6,7 @@
 RCT_EXPORT_VIEW_PROPERTY(onEvent, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onError, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(onCancelled, RCTDirectEventBlock)
-RCT_EXPORT_VIEW_PROPERTY(onChange, RCTDirectEventBlock)
+RCT_EXPORT_VIEW_PROPERTY(onLocationChange, RCTDirectEventBlock)
 RCT_EXPORT_VIEW_PROPERTY(wayPoints, NSDictionary)
 RCT_EXPORT_VIEW_PROPERTY(whiteList, NSArray)
 RCT_EXPORT_VIEW_PROPERTY(isSimulationEnable, BOOL)

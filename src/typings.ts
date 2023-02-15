@@ -32,7 +32,7 @@ export interface IMapboxNavigationProps {
   onError: (event: onMapboxEvent) => void;
   onEvent?: (event: onMapboxEvent) => void;
   onCancelled?: () => void;
-  onChange: (event: onLocationChange) => void;
+  onLocationChange: (event: onLocationChange) => void;
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";

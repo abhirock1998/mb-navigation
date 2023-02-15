@@ -21,10 +21,10 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   var _locationUpdationDelay = 0
   
   //  property that we need to expose to JS
-  @objc var onEvent: RCTDirectEventBlock
-  @objc var onError: RCTDirectEventBlock
-  @objc var onChange: RCTDirectEventBlock
-  @objc var onCancelled: RCTDirectEventBlock
+  @objc var onEvent: RCTDirectEventBlock?
+  @objc var onError: RCTDirectEventBlock?
+  @objc var onLocationChange: RCTDirectEventBlock?
+  @objc var onCancelled: RCTDirectEventBlock?
   
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
@@ -226,10 +226,14 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     {
       self._navViewController?.navigationService.endNavigation(feedback: nil)
       self._navViewController?.dismiss(animated: true, completion: {
-        // self.onNavigationCancelled?(["message":""])
         self.onEvent?(["message":"Destroying Parent VC"])
-        self._navViewController = nil
+        self.onCancelled?(["message":""])
         self.updateLocationDelay = 0
+        self._embedded = false
+        self._embedding = false
+        self._options = nil
+        self._wayPoints.removeAll()
+        self._navViewController = nil
       })
     }
   }
@@ -237,13 +241,23 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
-    endNavigation()
+    let alert = UIAlertController(title: "Cancel", message: "Do you confirm that you wish to cancel the navigation?", preferredStyle: .alert)
+    alert.addAction(UIAlertAction(title: "No", style: .cancel))
+    alert.addAction(UIAlertAction(title: "Yes", style: .destructive,handler: {_ in
+      self.endNavigation();
+    }))
+    navigationViewController.present(alert, animated: true, completion: nil)
   }
   
   // function fire once user reached to its destination
   func navigationViewController(_ navigationViewController: NavigationViewController, didArriveAt waypoint: Waypoint) -> Bool {
     let isFinalLeg = navigationViewController.navigationService.routeProgress.isFinalLeg
     if isFinalLeg {
+      let alert = UIAlertController(title: "You arrived at your destination",message: nil, preferredStyle: .alert)
+      alert.addAction(UIAlertAction(title: "Ok", style: .default,handler: {_ in
+        self.endNavigation()
+      }))
+      navigationViewController.present(alert, animated: true, completion: nil)
       return true
     }
     let alert = UIAlertController(title: "Arrived at \(waypoint.name ?? "Unknown").", message: "Would you like to continue?", preferredStyle: .alert)
@@ -263,10 +277,10 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     if updateLocationDelay > 0 {
       _locationUpdationDelay += 1
       if _locationUpdationDelay % updateLocationDelay == 0 {
-        onChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
+        onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
       }
     } else {
-      onChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
+      onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
     }
   }
   
