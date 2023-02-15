@@ -1,6 +1,3 @@
-/** @type {[number, number]}
- * Provide an array with longitude and latitude [$longitude, $latitude]
- */
 type AllowedWaypointType = "pickup" | "dropoff" | "start" | "end" | "none";
 type AllowedWhitelistKey = "pickup" | "dropoff" | "end" | "none";
 
@@ -15,13 +12,14 @@ export interface WayPoint {
 type WayPointMap = Record<number, WayPoint>;
 
 type onMapboxEvent = {
-  nativeEvent?: {
-    message?: string;
+  nativeEvent: {
+    message: string;
   };
 };
 
-type onLocationChange = {
-  nativeEvent?: {
+type onArrivalEvent = {
+  nativeEvent: {
+    message: string;
     longitude: number;
     latitude: number;
   };
@@ -32,11 +30,13 @@ export interface IMapboxNavigationProps {
   onError: (event: onMapboxEvent) => void;
   onEvent?: (event: onMapboxEvent) => void;
   onCancelled?: () => void;
-  onLocationChange: (event: onLocationChange) => void;
+  onLocationChange: (event: onArrivalEvent) => void;
   mute?: boolean;
   navigationMode?: "cycling" | "driving" | "walking";
   language?: "en" | "de";
   waypoints?: WayPointMap;
   whiteList: AllowedWhitelistKey[];
   updateLocationDelay?: number;
+  onWaypointArrival?: (event: onArrivalEvent) => void;
+  onDestinationArrival?: (event: onArrivalEvent) => void;
 }

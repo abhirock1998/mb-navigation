@@ -25,7 +25,8 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   @objc var onError: RCTDirectEventBlock?
   @objc var onLocationChange: RCTDirectEventBlock?
   @objc var onCancelled: RCTDirectEventBlock?
-  
+  @objc var onWaypointArrival: RCTDirectEventBlock?
+  @objc var onDestinationArrival: RCTDirectEventBlock?
   @objc var isSimulationEnable: Bool = false;
   @objc var navigationMode: String?
   @objc var language = "en"
@@ -64,10 +65,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   func initNavigation()  {
     _wayPoints.removeAll()
-    guard whiteList.count > 0 else {
-      onError?(["message":"must set whiteList array but provided with \(whiteList.count)"])
-      return
-    }
     let oWayPoints = wayPoints as NSDictionary
     _embedding = true
     onEvent?(["message":"Creating... waypoints for navigation"])
@@ -185,7 +182,10 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         NavigationSettings.shared.voiceMuted = strongSelf.mute;
         NavigationSettings.shared.distanceUnit = .mile
         strongSelf.onEvent?(["message":"Creating navigation with RouteResponse"])
-        guard let route = response.routes?.first else {return}
+        guard let route = response.routes?.first else {
+          strongSelf.onError?(["message":"No single route found for given waypoint"])
+          return
+        }
         let navigationService = MapboxNavigationService(route: route, routeIndex: 0, routeOptions: options,simulating: simulationMode)
         let navigationOptions = NavigationOptions(navigationService: navigationService);
         strongSelf.configureNavigationViewController(route: route ,routeOptions: options)
@@ -241,7 +241,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
-    let alert = UIAlertController(title: "Cancel", message: "Do you confirm that you wish to cancel the navigation?", preferredStyle: .alert)
+    let alert = UIAlertController(title: "Cancel", message: "Are you sure want to cancel the navigation?", preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "No", style: .cancel))
     alert.addAction(UIAlertAction(title: "Yes", style: .destructive,handler: {_ in
       self.endNavigation();
@@ -251,19 +251,23 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function fire once user reached to its destination
   func navigationViewController(_ navigationViewController: NavigationViewController, didArriveAt waypoint: Waypoint) -> Bool {
+    let coord = waypoint.coordinate;
+    let title = "Arrived at \(waypoint.name ?? "Unknown")."
     let isFinalLeg = navigationViewController.navigationService.routeProgress.isFinalLeg
     if isFinalLeg {
       let alert = UIAlertController(title: "You arrived at your destination",message: nil, preferredStyle: .alert)
       alert.addAction(UIAlertAction(title: "Ok", style: .default,handler: {_ in
+        self.onDestinationArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
         self.endNavigation()
       }))
       navigationViewController.present(alert, animated: true, completion: nil)
       return true
     }
-    let alert = UIAlertController(title: "Arrived at \(waypoint.name ?? "Unknown").", message: "Would you like to continue?", preferredStyle: .alert)
+    let alert = UIAlertController(title:title, message: "Would you like to continue?", preferredStyle: .alert)
     alert.addAction(UIAlertAction(title: "Ok", style: .default, handler: { _ in
       // Begin the next leg once the driver confirms
       if !isFinalLeg {
+        self.onWaypointArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
         navigationViewController.navigationService.router.advanceLegIndex()
         navigationViewController.navigationService.start()
       }
@@ -274,13 +278,14 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   // function fire every second
   func navigationViewController(_ navigationViewController: NavigationViewController, didUpdate progress: RouteProgress, with location: CLLocation, rawLocation: CLLocation) {
+    let coord = location.coordinate;
     if updateLocationDelay > 0 {
       _locationUpdationDelay += 1
       if _locationUpdationDelay % updateLocationDelay == 0 {
-        onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude ])
+        onLocationChange?(["longitude": coord.longitude,"latitude": coord.latitude,"message":"Location change"])
       }
     } else {
-      onLocationChange?(["longitude": location.coordinate.longitude,"latitude": location.coordinate.latitude])
+      onLocationChange?(["longitude": coord.longitude,"latitude": coord.latitude,"message":"Location change"])
     }
   }
   

@@ -2,21 +2,27 @@
 
 ## Getting started
 
-`$ npm install react-native-mb-navigation --save`
+Paste this line in your project `Package.json` and run `npm i`
 
-### Mostly automatic installation
+<!-- `$ npm install react-native-mb-navigation --save` -->
 
-### For iOS
+```javascript
+"react-native-mb-navigation": "https://github.com/abhirock1998/mb-navigation.git"
+```
+
+### Installation
+
+#### For iOS
 
 ```javascript
 cd ios
-rpod install
+pod install
 ```
 
 ## Usage
 
 ```javascript
-import MbNavigation from "react-native-mb-navigation";
+import MapboxNavigation from "react-native-mb-navigation";
 ```
 
 > Depend on `MapoboxNavigation 1.3.0`
@@ -32,13 +38,17 @@ import MbNavigation from "react-native-mb-navigation";
 - **isSimulationEnable** `boolean` We can test the navigation functionality during development by passing certain parameters.
 - **onError** `Function` This function is called when an error occurs.
 - **onEvent** `Function` usable for debugging
-- **onNavigationCancelled** `Function` This function is called when the user cancels navigation by either pressing the close icon on the bottom bar or from the Notification tray.
+- **onCancelled** `Function` This function is called when the user cancels navigation by either pressing the close icon on the bottom bar or from the Notification tray.
 - **onDestinationArrival** `Function` called once user arrived at final waypoint
 - **onLocationChange** `Function` This function is called every second and returns the current user location along with additional details.
 - **mute** `boolean` To mute navigation speech, a property can be set to true, with false being the default.
 - **navigationMode** `String` The mode can be used for different types of transportation, such as walking, cycling, or driving. The default mode is driving
 - **language** `String` A property can be used to change the navigation language, with `en` being the default.
 - **waypoints** `Waypoint` Dictionary of coordinate
+- **whiteList** use for making specific point as sopppage point and other waypoint type that not include in this arry will make as non stoppage point by default `[]`
+- **updateLocationDelay** `number` for add delay in location change update function
+- **onWaypointArrival** `Function` this function fire whenever user arrive at waypoint except `Destination` waypoint
+- **onDestinationArrival** `Function` this function fire only once when user arrived at ts `Destination` waypoint
 
 ```javascript
 Waypoint;
