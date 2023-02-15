@@ -10,15 +10,13 @@ export declare interface WayPoint {
 
 declare type WayPointMap = Record<number, WayPoint>;
 
-type onMapboxEvent = {
+declare type onMapboxEvent = {
   nativeEvent: {
     message: string;
-    longitude: number;
-    latitude: number;
   };
 };
 
-type onArrivalEvent = {
+declare type onArrivalEvent = {
   nativeEvent: {
     message: string;
     longitude: number;
