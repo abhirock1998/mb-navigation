@@ -6,6 +6,7 @@ export interface WayPoint {
   Name?: string;
   Latitude: number;
   Longitude: number;
+  userId?: string;
 }
 
 type WayPointMap = Record<number, WayPoint>;
@@ -24,6 +25,24 @@ type onArrivalEvent = {
   };
 };
 
+export type WaypointArrival = {
+  nativeEvent: {
+    message: string;
+    longitude: number;
+    latitude: number;
+    details: Location;
+  };
+};
+
+type Location = {
+  name: string;
+  id: string;
+  latitude: string;
+  longitude: string;
+  type: string;
+  userIs: string;
+};
+
 export interface IMapboxNavigationProps {
   isSimulationEnable?: boolean;
   onError: (event: onMapboxEvent) => void;
@@ -36,6 +55,6 @@ export interface IMapboxNavigationProps {
   waypoints: WayPointMap;
   whiteList: AllowedWaypointType[];
   updateLocationDelay?: number;
-  onWaypointArrival?: (event: onArrivalEvent) => void;
+  onWaypointArrival?: (event: WaypointArrival) => void;
   onDestinationArrival?: (event: onArrivalEvent) => void;
 }

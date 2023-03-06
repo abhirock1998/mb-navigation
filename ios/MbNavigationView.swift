@@ -12,6 +12,8 @@ import MapboxNavigation
 import MapboxCoreNavigation
 import MapboxDirections
 
+let delimeter = "$"
+
 class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   weak var _navViewController: NavigationViewController?
   var _embedded: Bool
@@ -19,6 +21,7 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   var _options: NavigationRouteOptions?
   var _wayPoints = [Waypoint]()
   var _locationUpdationDelay = 0
+  var _pointType = [String:Location]()
   
   //  property that we need to expose to JS
   @objc var onEvent: RCTDirectEventBlock?
@@ -61,19 +64,24 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     }
   }
   
-  
+//  userId
   
   func initNavigation()  {
     _wayPoints.removeAll()
+    _pointType.removeAll()
     let oWayPoints = wayPoints as NSDictionary
     _embedding = true
     onEvent?(["message":"Creating... waypoints for navigation"])
     var locations = [Location]()
+    var pickupPointId: Int = 0
+    var dropoffPointId: Int = 0
     for item in oWayPoints as NSDictionary
     {
+      let id = UUID().uuidString;
       let point = item.value as! NSDictionary
       guard let oName = point["Name"] as? String else {return}
       guard let oType = point["Type"] as? String else {return}
+      let oKey = point["userId"] as? String
       guard let oLatitude = point["Latitude"] as? Double else {
         onError?(["message":"Latitude should be number"])
         return
@@ -83,22 +91,35 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         return
       }
       let order = point["Order"] as? Int
-      let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order,type: oType)
+      let location = Location(name: oName, latitude: oLongitude, longitude: oLatitude, order: order,type: oType,id:id,userId: oKey)
       locations.append(location)
     }
     // sort location
-    onEvent?(["message":"Location based on Order key is started"])
+    onEvent?(["message":"Sorting... Location based on Order key"])
     locations.sort(by: {$0.order ?? 0 < $1.order ?? 0})
-    onEvent?(["message":"Location based on Order key is Done"])
-    for loc in locations {
+    onEvent?(["message":"Location sorting is Done"])
+    for loc in locations{
+      let id = loc.id;
       let latitude = loc.latitude!
       let longitude = loc.longitude!
       let point = createWaypoint(lat: latitude, lng:longitude)
-      point.name = loc.name
       let parsedLat = point.coordinate.latitude
       if parsedLat != 0 {
         if !whiteList.contains(loc.type){
           point.separatesLegs = false;
+        } else {
+          // here we make sure than name always be a unique since
+          // we are using as key for storing Location class for future use
+          var pointName: String = loc.name
+          if(loc.type == "pickup"){
+            pickupPointId += 1
+            pointName = "Pickup point \(pickupPointId)"
+          } else if (loc.type == "dropoff"){
+            dropoffPointId += 1
+            pointName = "Dropoff point \(dropoffPointId)"
+          }
+          point.name = pointName
+          _pointType[pointName] = loc
         }
         _wayPoints.append(point)
       }
@@ -117,9 +138,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   /**
    * Constrain degrees to range -180..+180 (for longitude); e.g. -181 => 179, 181 => -179.
-   * @private
-   * @param {number} degrees
-   * @returns degrees within range -180..+180.
    */
   func wrapLongitude(degree: Double) -> Double {
     if (-180 <= degree && degree <= 180) {return wrapDouble(degree: degree)}
@@ -131,9 +149,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
   
   /**
    * Constrain degrees to range -90..+90 (for latitude); e.g. -91 => -89, 91 => 89.
-   * @private
-   * @param {number} degrees
-   * @returns degrees within range -90..+90.
    */
   func wrapLatitude(degree: Double) -> Double {
     if(-90 <= degree && degree <= 90) {return wrapDouble(degree: degree)}
@@ -141,7 +156,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     let y = (( Int(x) - p/4) % p + p)
     return wrapDouble(degree: Double(4 * a/p * abs(y % p - p/2) - a))
   }
-  
   
   // wrapped long lfoat number to 6digit after decimal to process data easily
   func wrapDouble(degree: Double) -> Double {
@@ -181,11 +195,11 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
         strongSelf.onEvent?(["message":"Simulation is \(simulationStatus)"])
         NavigationSettings.shared.voiceMuted = strongSelf.mute;
         NavigationSettings.shared.distanceUnit = .mile
-        strongSelf.onEvent?(["message":"Creating navigation with RouteResponse"])
         guard let route = response.routes?.first else {
           strongSelf.onError?(["message":"No single route found for given waypoint"])
           return
         }
+        strongSelf.onEvent?(["message":"Creating navigation with RouteResponse"])
         let navigationService = MapboxNavigationService(route: route, routeIndex: 0, routeOptions: options,simulating: simulationMode)
         let navigationOptions = NavigationOptions(navigationService: navigationService);
         strongSelf.configureNavigationViewController(route: route ,routeOptions: options)
@@ -204,7 +218,10 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     vc.delegate = self
     self._navViewController = vc
     let currentController = getViewController()
-    guard let parentVc = currentController else {return}
+    guard let parentVc = currentController else {
+      onError?(["message":"Unable to get UIViewController to present navigation controller"])
+      return
+    }
     onEvent?(["message":"Parent VC already loaded"])
     parentVc.present(vc, animated: true,completion: nil)
   }
@@ -220,14 +237,13 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     return nil
   }
   
-  
   func endNavigation()  {
     if(self._navViewController != nil)
     {
       self._navViewController?.navigationService.endNavigation(feedback: nil)
       self._navViewController?.dismiss(animated: true, completion: {
         self.onEvent?(["message":"Destroying Parent VC"])
-        self.onCancelled?(["message":""])
+        self.onCancelled?(["message":"Navigation is cancelled"])
         self.updateLocationDelay = 0
         self._embedded = false
         self._embedding = false
@@ -237,7 +253,6 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
       })
     }
   }
-  
   
   // function provided by Mapbox navigation view controller to check is navigation cancel by user
   func navigationViewControllerDidDismiss(_ navigationViewController: NavigationViewController, byCanceling canceled: Bool) {
@@ -250,11 +265,24 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     navigationViewController.present(alert, animated: true, completion: nil)
   }
   
+  func parsePointDetails(waypoint: Waypoint) -> (String,String,Location?) {
+    let name = waypoint.name ?? ""
+    let storedPoint = self._pointType[name]
+    guard let point = storedPoint else {return (name,"",nil)}
+    onEvent?(["message":"Parse location \(point.userId!) \(point.order!)"])
+    return (name,point.id,point)
+  }
+  
+  func parseLocation(location: Location) -> NSDictionary{
+    return ["name":location.name,"id":location.id,"latitude":location.latitude!,"longitude":location.longitude! ,"type":location.type,"userId":location.userId!]
+  }
+  
   // function fire once user reached to its destination
   func navigationViewController(_ navigationViewController: NavigationViewController, didArriveAt waypoint: Waypoint) -> Bool {
-    let coord = waypoint.coordinate;
-    let title = "Arrived at \(waypoint.name ?? "Unknown")."
     let isFinalLeg = navigationViewController.navigationService.routeProgress.isFinalLeg
+    let point = parsePointDetails(waypoint: waypoint)
+    let title = "Arrived at \(point.0)."
+    let coord = waypoint.coordinate;
     if isFinalLeg {
       // final destination alert
       let alert = UIAlertController(title: "You arrived at your destination",message: nil, preferredStyle: .alert)
@@ -270,7 +298,12 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
       // Begin the next leg once the driver confirms
       // waypoint arrival alert
       if !isFinalLeg {
-        self.onWaypointArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
+        let data = point.2
+        if data != nil {
+          self.onWaypointArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude,"details":self.parseLocation(location: data!)])
+        }else{
+          self.onWaypointArrival?(["message":title,"latitude":coord.latitude,"longitude":coord.longitude])
+        }
         navigationViewController.navigationService.router.advanceLegIndex()
         navigationViewController.navigationService.start()
       }
@@ -290,36 +323,30 @@ class MapboxNavigation: UIView, NavigationViewControllerDelegate {
     } else {
       onLocationChange?(["longitude": coord.longitude,"latitude": coord.latitude,"message":"Location change"])
     }
+    
   }
-  
 }
 
 
 // -----------------------------  UTILS CLASS MODEL -------------------------------------
-
 class Location : Codable{
   let name: String
   let latitude: Double?
   let longitude: Double?
   let order: Int?
   let type: String
+  let id: String
+  let userId: String?
   
-  init(name: String, latitude: Double?, longitude: Double?, order: Int? = nil,type: String) {
+  init(name: String, latitude: Double?, longitude: Double?, order: Int? = nil,type: String,id:String,userId: String?) {
     self.name = name
     self.latitude = latitude
     self.longitude = longitude
     self.order = order
     self.type = type
+    self.id = id
+    self.userId = userId
   }
 }
-
-
-
-
-
-
-
-
-
 
 
